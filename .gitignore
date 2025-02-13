@@ -1,0 +1,6 @@
+test
+.cache
+compile_commands.json
+libgargoyle.a
+out
+**/*.o
