@@ -4,21 +4,30 @@
 # include <string>
 # include <functional>
 
+enum GargoyleArgumentFlag {
+	NONE,
+	DASH,
+	DOUBLE_DASH
+};
+
 class GargoyleArgument {
 	private:
-		std::string flag;
+		GargoyleArgumentFlag flag;
+		std::string id;
 		std::string description;
 		bool optional;
 		std::function<bool(const std::string&)> handler;
 	public:
-		GargoyleArgument(const std::string& flag,
+		GargoyleArgument(const GargoyleArgumentFlag flag,
+				 const std::string& id,
 				 const std::string& description,
 				 bool optional,
 				 std::function<bool(const std::string&)> handler);
 		
 		bool run(const std::string& argument);
 
-		std::string get_flag();
+		GargoyleArgumentFlag get_flag();
+		std::string get_id();
 		std::string get_description();
 		bool get_optional();
 };
