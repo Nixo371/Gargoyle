@@ -1,7 +1,7 @@
 #include "gargoyle.hpp"
 #include "gargoyle_argument.hpp"
 
-#include <complex>
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -23,13 +23,16 @@ bool Gargoyle::add_argument(GargoyleArgument argument) {
 	return (ret.second);
 }
 
-std::vector<std::string> Gargoyle::parse_argument(std::string argument) {
-	std::vector<std::string> argument_ids = std::vector<std::string>();
+std::vector<ParsedArgument> Gargoyle::parse_argument(std::string argument) {
+	std::vector<ParsedArgument> argument_ids = std::vector<ParsedArgument>();
 	// DOUBLE_DASH
 	if (argument.substr(0, 2) == "--") {
 		std::string id = argument.substr(2);
 		if (this->arguments.count(id) != 0 && this->arguments.at(id).get_flag() == GargoyleArgumentFlag::DOUBLE_DASH) {
-			argument_ids.push_back(id);
+			ParsedArgument parsed_argument;
+			parsed_argument.argument_id = id;
+			parsed_argument.optional_argument = "";
+			argument_ids.push_back(parsed_argument);
 		}
 	}
 	// TODO How do I handle multi-character single dash arguments?
@@ -39,14 +42,21 @@ std::vector<std::string> Gargoyle::parse_argument(std::string argument) {
 		// First check for multi character id
 		std::string id = argument.substr(1);
 		if (this->arguments.count(id) != 0 && this->arguments.at(id).get_flag() == GargoyleArgumentFlag::DASH) {
-			argument_ids.push_back(id);
+			ParsedArgument parsed_argument;
+			parsed_argument.argument_id = id;
+			parsed_argument.optional_argument = "";
+			argument_ids.push_back(parsed_argument);
+
 			return (argument_ids);
 		}
 
 		for (char c : id) {
 			std::string id_str = std::string(1, c);
 			if (this->arguments.count(id_str) != 0 && this->arguments.at(id_str).get_flag() == GargoyleArgumentFlag::DASH) {
-				argument_ids.push_back(id_str);
+				ParsedArgument parsed_argument;
+				parsed_argument.argument_id = id_str;
+				parsed_argument.optional_argument = "";
+				argument_ids.push_back(parsed_argument);
 			}
 		}
 
@@ -55,26 +65,32 @@ std::vector<std::string> Gargoyle::parse_argument(std::string argument) {
 	// Neither DASH nor DOUBLE_DASH
 	else {
 		if (this->arguments.count(argument) != 0 && this->arguments.at(argument).get_flag() == GargoyleArgumentFlag::NONE) {
-			argument_ids.push_back(argument);
+			ParsedArgument parsed_argument;
+			parsed_argument.argument_id = argument;
+			parsed_argument.optional_argument = "";
+			argument_ids.push_back(parsed_argument);
 		}
-		
 	}
 	
 
 	return (argument_ids);
 }
 
-std::vector<std::string> Gargoyle::parse_arguments(std::vector<std::string> arguments) {
-	std::vector<std::string> argument_ids = std::vector<std::string>();
-	for (std::string arg : arguments) {
-		std::vector<std::string> parsed_argument_ids = parse_argument(arg);
-		for (std::string id : parsed_argument_ids) {
-			argument_ids.push_back(id);
+std::vector<ParsedArgument> Gargoyle::parse_arguments(std::vector<std::string> arguments) {
+	std::vector<ParsedArgument> parsed_arguments = std::vector<ParsedArgument>();
+	for (size_t i = 0; i < arguments.size(); i++) {
+		std::string arg = arguments.at(i);
+
+		std::vector<ParsedArgument> parsed_argument = parse_argument(arg);
+		for (ParsedArgument parsed_arg : parsed_argument) {
+			if (i + 1 < arguments.size()) {
+				parsed_arg.optional_argument = arguments.at(i + 1);
+			}
+			parsed_arguments.push_back(parsed_arg);
 		}
 	}
 
-	return (argument_ids);
-
+	return (parsed_arguments);
 }
 
 bool Gargoyle::add_argument(const GargoyleArgumentFlag flag, const std::string& id, bool& variable, std::string description, bool optional) {
@@ -123,16 +139,18 @@ bool Gargoyle::add_argument(const GargoyleArgumentFlag flag, const std::string& 
 }
 
 bool Gargoyle::run() {
-	std::vector<std::string> parsed_argument_ids = parse_arguments(this->raw_arguments);
-	for (size_t i = 0; i < parsed_argument_ids.size(); i++) {
-		std::string id = parsed_argument_ids.at(i);
+	std::vector<ParsedArgument> parsed_arguments = parse_arguments(this->raw_arguments);
+	for (ParsedArgument parsed_argument : parsed_arguments) {
+		std::string id = parsed_argument.argument_id;
+		std::string optional_argument = parsed_argument.optional_argument;
+		if (this->arguments.count(id) == 0) {
+			std::cerr << "[ERROR] Could not find argument '" << id << "'" << std::endl;
+			continue;
+		}
 		GargoyleArgument argument = this->arguments.at(id);
-		if (i == parsed_argument_ids.size() - 1) {
-			argument.run("");
-		}
-		else {
-			argument.run(parsed_argument_ids[i + 1]);
-		}
+		
+		argument.run(optional_argument);
 	}
+
 	return (true);
 }

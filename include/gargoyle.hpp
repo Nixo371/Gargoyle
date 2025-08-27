@@ -7,6 +7,11 @@
 
 # include "gargoyle_argument.hpp"
 
+typedef struct {
+	std::string argument_id;
+	std::string optional_argument;
+} ParsedArgument;
+
 /**
  * @brief The main class that manages and executes arguments
  */
@@ -31,7 +36,7 @@ class Gargoyle {
 		 *
 		 * @return A list of valid argument ids
 		 */
-		std::vector<std::string> parse_argument(std::string argument);
+		std::vector<ParsedArgument> parse_argument(std::string argument);
 
 		/**
 		 * @brief Parses a list of arguments
@@ -40,7 +45,7 @@ class Gargoyle {
 		 *
 		 * @return A list of valid argument ids
 		 */
-		std::vector<std::string> parse_arguments(std::vector<std::string> arguments);
+		std::vector<ParsedArgument> parse_arguments(std::vector<std::string> arguments);
 
 	public:
 		/**
