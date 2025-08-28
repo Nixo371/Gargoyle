@@ -31,7 +31,7 @@ std::vector<ParsedArgument> Gargoyle::parse_argument(std::string argument) {
 		if (this->arguments.count(id) != 0 && this->arguments.at(id).get_flag() == GargoyleArgumentFlag::DOUBLE_DASH) {
 			ParsedArgument parsed_argument;
 			parsed_argument.argument_id = id;
-			parsed_argument.optional_argument = "";
+			parsed_argument.optional_argument = "NEXT";
 			argument_ids.push_back(parsed_argument);
 		}
 	}
@@ -44,7 +44,7 @@ std::vector<ParsedArgument> Gargoyle::parse_argument(std::string argument) {
 		if (this->arguments.count(id) != 0 && this->arguments.at(id).get_flag() == GargoyleArgumentFlag::DASH) {
 			ParsedArgument parsed_argument;
 			parsed_argument.argument_id = id;
-			parsed_argument.optional_argument = "";
+			parsed_argument.optional_argument = "NEXT";
 			argument_ids.push_back(parsed_argument);
 
 			return (argument_ids);
@@ -67,7 +67,7 @@ std::vector<ParsedArgument> Gargoyle::parse_argument(std::string argument) {
 		if (this->arguments.count(argument) != 0 && this->arguments.at(argument).get_flag() == GargoyleArgumentFlag::NONE) {
 			ParsedArgument parsed_argument;
 			parsed_argument.argument_id = argument;
-			parsed_argument.optional_argument = "";
+			parsed_argument.optional_argument = "NEXT";
 			argument_ids.push_back(parsed_argument);
 		}
 	}
@@ -83,8 +83,15 @@ std::vector<ParsedArgument> Gargoyle::parse_arguments(std::vector<std::string> a
 
 		std::vector<ParsedArgument> parsed_argument = parse_argument(arg);
 		for (ParsedArgument parsed_arg : parsed_argument) {
-			if (i + 1 < arguments.size()) {
-				parsed_arg.optional_argument = arguments.at(i + 1);
+			// This prevents stuff like './program -abc input.txt' as being interpreted as each of a, b, and c having the optional argument of "input.txt"
+			// If there is not one argument found (-abc) it will interpret single letters, which won't have an argument attached to them, forcing the use of '-ab -c input.txt'
+			if (parsed_arg.optional_argument == "NEXT") {
+				if (i + 1 < arguments.size()) {
+					parsed_arg.optional_argument = arguments.at(i + 1);
+				}
+				else {
+					parsed_arg.optional_argument = "";
+				}
 			}
 			parsed_arguments.push_back(parsed_arg);
 		}
