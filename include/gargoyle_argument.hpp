@@ -30,6 +30,8 @@ class GargoyleArgument {
 		std::string get_id();
 		std::string get_description();
 		bool get_optional();
+
+		std::string get_full_id();
 };
 
 #endif

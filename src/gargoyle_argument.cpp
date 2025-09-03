@@ -31,3 +31,15 @@ std::string GargoyleArgument::get_description() {
 bool GargoyleArgument::get_optional() {
 	return (this->optional);
 }
+
+std::string GargoyleArgument::get_full_id() {
+	switch (this->get_flag()) {
+		case GargoyleArgumentFlag::NONE:
+			return (this->get_id());
+		case GargoyleArgumentFlag::DASH:
+			return ("-" + this->get_id());
+		case GargoyleArgumentFlag::DOUBLE_DASH:
+			return ("--" + this->get_id());
+	}
+	return ("");
+}

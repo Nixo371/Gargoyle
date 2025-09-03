@@ -19,6 +19,7 @@ class Gargoyle {
 	private:
 		std::vector<std::string> raw_arguments;
 		std::unordered_map<std::string, GargoyleArgument> arguments;
+		bool default_help;
 
 		/**
 		 * @brief Adds an argument to the map
@@ -47,14 +48,20 @@ class Gargoyle {
 		 */
 		std::vector<ParsedArgument> parse_arguments(std::vector<std::string> arguments);
 
+		/**
+		 *
+		 */
+		void register_help_argument();
+
 	public:
 		/**
 		 * @brief The class constructor
 		 *
 		 * @param argc The argc argument from the main function
 		 * @param argv The argv argument from the main function
+		 * @param default_help [Optional] Whether or not Gargoyle should generate a '-h/--help' argument to display all arguments along with their arguments (Default: true)
 		 */
-		Gargoyle(int argc, char *argv[]);
+		Gargoyle(int argc, char **argv, bool default_help = true);
 
 		/**
 		 * @brief Adds an argument that sets a boolean variable to true if present

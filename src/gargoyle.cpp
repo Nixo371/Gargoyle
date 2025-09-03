@@ -3,11 +3,13 @@
 
 #include <cstddef>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
-Gargoyle::Gargoyle(int argc, char *argv[]) {
-	for (int i = 1; i < argc; i++) {
+Gargoyle::Gargoyle(int argc, char **argv, bool default_help) {
+	this->default_help = default_help;
+	for (int i = 0; i < argc; i++) {
 		this->raw_arguments.push_back(argv[i]);
 	}
 }
@@ -100,6 +102,33 @@ std::vector<ParsedArgument> Gargoyle::parse_arguments(std::vector<std::string> a
 	return (parsed_arguments);
 }
 
+void Gargoyle::register_help_argument() {
+	std::string SPACER = "\t\t";
+
+	std::stringstream ss = std::stringstream();
+	ss << "Usage:\n";
+	ss << "  " << this->raw_arguments[0] << " [options]\n";
+	ss << "\n";
+	ss << "Options:\n";
+
+	ss << "  " << "-h, --help" << SPACER << "Print this help message" << "\n";
+	for (std::pair<std::string, GargoyleArgument> arg : this->arguments) {
+		std::string id = arg.first;
+		GargoyleArgument argument = arg.second;
+
+		ss << "  " << argument.get_full_id() << SPACER << argument.get_description() << "\n";
+	}
+	std::string help_message = ss.str();
+
+	auto help = [help_message]() {
+		std::cout << help_message << std::endl;
+	};
+	
+	// TODO Should I delete any existing -h/--help?
+	this->add_argument(GargoyleArgumentFlag::DASH, "h", help);
+	this->add_argument(GargoyleArgumentFlag::DOUBLE_DASH, "help", help);
+}
+
 bool Gargoyle::add_argument(const GargoyleArgumentFlag flag, const std::string& id, bool& variable, std::string description, bool optional) {
 	auto handler = [&variable](const std::string& ...) -> bool {
 		variable = true;
@@ -146,7 +175,11 @@ bool Gargoyle::add_argument(const GargoyleArgumentFlag flag, const std::string& 
 }
 
 bool Gargoyle::run() {
-	std::vector<ParsedArgument> parsed_arguments = parse_arguments(this->raw_arguments);
+	this->register_help_argument();
+	std::vector<std::string> arguments = std::vector<std::string>();
+	arguments.insert(arguments.end(), this->raw_arguments.begin() + 1, this->raw_arguments.end());
+
+	std::vector<ParsedArgument> parsed_arguments = parse_arguments(arguments);
 	for (ParsedArgument parsed_argument : parsed_arguments) {
 		std::string id = parsed_argument.argument_id;
 		std::string optional_argument = parsed_argument.optional_argument;
